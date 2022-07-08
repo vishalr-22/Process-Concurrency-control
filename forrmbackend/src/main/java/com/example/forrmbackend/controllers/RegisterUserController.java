@@ -1,46 +1,26 @@
 package com.example.forrmbackend.controllers;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.List;
 import java.util.Optional;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.core.FindAndModifyOptions;
-import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.socket.client.WebSocketClient;
-import org.springframework.web.socket.client.standard.StandardWebSocketClient;
-import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import com.example.forrmbackend.models.registeruser;
 import com.example.forrmbackend.repositories.RegisterUserRepository;
-import com.mongodb.client.result.UpdateResult;
 
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.stomp.StompSessionHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.util.HtmlUtils;
 
@@ -62,7 +42,7 @@ public class RegisterUserController {
 
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
+    @CrossOrigin(origins = {"http://localhost:4200","http://10.0.0.108:4200"})
     @GetMapping("/findById")
     public Optional<registeruser> findById(
             @RequestParam(required = true) String id
@@ -72,7 +52,7 @@ public class RegisterUserController {
         return k;
     }    
 
-    @CrossOrigin(origins = "http://localhost:4200")
+    @CrossOrigin(origins = {"http://localhost:4200","http://10.0.0.108:4200"})
     @GetMapping("/addUser")
     public registeruser saveUsers(
             @RequestParam(required = true) String process,
@@ -93,13 +73,13 @@ public class RegisterUserController {
         return k;
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
+    @CrossOrigin(origins = {"http://localhost:4200","http://10.0.0.108:4200"})
     @GetMapping("/fetchUsers")
     public Page<registeruser> fetchUsers(Pageable p) {
         return registerUserRepository.findAll(p);
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
+    @CrossOrigin(origins = {"http://localhost:4200","http://10.0.0.108:4200"})
     @GetMapping("/startProcess")
     public registeruser startProcess(
             @RequestParam(required = true) String id,
@@ -119,7 +99,7 @@ public class RegisterUserController {
         // RegisterUserController.class);
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
+    @CrossOrigin(origins = {"http://localhost:4200","http://10.0.0.108:4200"})
     @GetMapping("/startActualProcess")
     public registeruser startActualProcess(
             @RequestParam(required = true) String id,
@@ -154,7 +134,7 @@ public class RegisterUserController {
         return updateResult;
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
+    @CrossOrigin(origins = {"http://localhost:4200","http://10.0.0.108:4200"})
     @GetMapping("/runProcess")
     public registeruser runProcess(
             @RequestParam(required = true) String id,
@@ -163,7 +143,8 @@ public class RegisterUserController {
             @RequestParam(required = false) String processed,
             @RequestParam(required = false) String processStartedAt,
             @RequestParam(required = false) String processFinishedAt,
-            @RequestParam(required = false) Boolean updatedAt) {
+            @RequestParam(required = false) Boolean updatedAt,
+            @RequestParam(required = true) String sessionId) {
         // Query query = new Query().addCriteria(Criteria.where("_id").is(id));
         // Update updateDefination = new Update().set("process",process);
         // FindAndModifyOptions options = new
@@ -201,7 +182,7 @@ public class RegisterUserController {
                     e.printStackTrace();
                 }
                 percent = percent + 20;
-                requestFunction(String.valueOf(percent));
+                requestFunction(String.valueOf(percent), sessionId);
             }
     
         }
@@ -210,39 +191,13 @@ public class RegisterUserController {
 
     }
 
-    public void requestFunction(String message) {
-        this.template.convertAndSend("/topic/greetings", message);
-        // WebSocketClient client = new StandardWebSocketClient();
-
-        // WebSocketStompClient stompClient = new WebSocketStompClient(client);
-        // stompClient.setMessageConverter(new MappingJackson2MessageConverter());
-
-        // StompSessionHandler sessionHandler = (StompSessionHandler) new MyStompSessionHandler();
-        // stompClient.connect("http://10.0.0.188:8093/ws/topic/greeting?message=" + message, sessionHandler);
-
-        // new Scanner(System.in).nextLine();
-
-        URL yahoo;
-        try {
-        yahoo = new URL("http://10.0.0.108:8093/ws/topic/greeting?message="
-        +message);
-        java.net.URLConnection yc = yahoo.openConnection();
-        BufferedReader in = new BufferedReader(
-        new InputStreamReader(
-        yc.getInputStream()));
-        String inputLine;
-
-        while ((inputLine = in.readLine()) != null)
-        System.out.println(inputLine);
-        in.close();
-        } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-        }
-
+    public void requestFunction(String message, String sessionId) {
+        String url = "/topic/greetings" + sessionId;
+        this.template.convertAndSend(url, message);
+        
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
+    @CrossOrigin(origins = {"http://localhost:4200","http://10.0.0.108:4200"})
     @GetMapping("/finishProcess")
     public registeruser finishProcess(
             @RequestParam(required = true) String id,
@@ -269,9 +224,9 @@ public class RegisterUserController {
         return updateResult;
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
+    @CrossOrigin(origins = {"http://localhost:4200","http://10.0.0.108:4200"})
     @MessageMapping("/hello")
-    @SendTo("/topic/greetings")
+    @SendTo("/topic/greetings/{uniqueId}")
     public String greeting(String message) throws Exception {
         // Thread.sleep(1000); // simulated delay
         System.out.println(message);

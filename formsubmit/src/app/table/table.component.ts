@@ -11,6 +11,7 @@ import { InteractionService } from '../interaction.service';
 import { map } from 'rxjs/operators';
 import * as Stomp from 'stompjs';
 import * as SockJS from 'sockjs-client';
+import {v4 as uuidv4} from 'uuid';
 
 
 
@@ -47,9 +48,11 @@ export class TableComponent implements OnInit {
   webSocketEndPoint: string = 'http://10.0.0.108:8093/ws';
   topic: string = "/topic/greetings";
   stompClient: any;
+  uniqueId: any;
 
-  _connect() {
+  _connect(uuid: any) {
     console.log("Initialize WebSocket Connection");
+    this.topic = this.topic + uuid
     let ws = new SockJS(this.webSocketEndPoint);
     this.stompClient = Stomp.over(ws);
     const _this = this;
@@ -65,6 +68,7 @@ export class TableComponent implements OnInit {
     if (this.stompClient !== null) {
       this.stompClient.disconnect();
     }
+    this.topic = "/topic/greetings"
     console.log("Disconnected");
   }
 
@@ -72,7 +76,7 @@ export class TableComponent implements OnInit {
   errorCallBack(error: any) {
     console.log("errorCallBack -> " + error)
     setTimeout(() => {
-      this._connect();
+      this._connect(this.uniqueId);
     }, 5000);
   }
 
@@ -96,7 +100,7 @@ export class TableComponent implements OnInit {
   name: any;
 
   connect() {
-    this._connect();
+    this._connect("ppp");
   }
 
   disconnect() {
@@ -273,13 +277,17 @@ export class TableComponent implements OnInit {
   async runActualProcess(processId: any, length: any, processObjId: any) {
 
     // if (length == 1) {
+    let myuuid = uuidv4();
+    this.uniqueId = myuuid
+    this._connect(myuuid)
     const processing = true
     const processStartedAt = this.datepipe.transform((new Date), 'MM/dd/yyyy h:mm:ss');
     const toBeProcessed = false
     console.log("runActualProcess")
     var URL = `http://10.0.0.108:8093/runProcess?id=${processId}&processing=${processing}&processStartedAt=${processStartedAt}
-      &toBeProcessed=${toBeProcessed}`
+      &toBeProcessed=${toBeProcessed}&sessionId=${this.uniqueId}`
     await this.http.get(URL).subscribe((response) => {
+      this._disconnect()
       console.log(response)
       this.loadData()
       this.removeProcess(processObjId)
