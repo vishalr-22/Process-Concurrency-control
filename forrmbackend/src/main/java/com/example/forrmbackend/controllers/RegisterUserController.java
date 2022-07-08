@@ -212,7 +212,6 @@ public class RegisterUserController {
     }
 
     public void requestFunction(String message) {
-        HttpURLConnection connection = null;
         this.template.convertAndSend("/topic/greetings", message);
         // WebSocketClient client = new StandardWebSocketClient();
 
