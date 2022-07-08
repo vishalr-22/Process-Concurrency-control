@@ -1,6 +1,7 @@
 package com.example.forrmbackend.controllers;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,16 @@ public class ProcessRequestController {
         this.processRequestRepository = processRequestRepository;
 
     }
+
+    // @CrossOrigin(origins = "http://localhost:4200")
+    // @GetMapping("/findById")
+    // public Optional<processRequest> findById(
+    //         @RequestParam(required = true) String id
+    //         ) {
+
+    //     Optional<processRequest> k = processRequestRepository.findById(id);
+    //     return k;
+    // }    
 
     @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/fetchProcesses")

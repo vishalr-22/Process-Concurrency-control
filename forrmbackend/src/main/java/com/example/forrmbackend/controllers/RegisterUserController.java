@@ -1,7 +1,15 @@
 package com.example.forrmbackend.controllers;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 import java.util.Optional;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.catalina.User;
@@ -21,15 +29,30 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.socket.client.WebSocketClient;
+import org.springframework.web.socket.client.standard.StandardWebSocketClient;
+import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import com.example.forrmbackend.models.registeruser;
 import com.example.forrmbackend.repositories.RegisterUserRepository;
 import com.mongodb.client.result.UpdateResult;
 
+import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.stomp.StompSessionHandler;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.util.HtmlUtils;
+
 @RestController
+@Controller
 public class RegisterUserController {
 
     private final RegisterUserRepository registerUserRepository;
+
+    @Autowired
+    private SimpMessagingTemplate template;
 
     @Autowired
     MongoTemplate mongoTemplate;
@@ -39,6 +62,16 @@ public class RegisterUserController {
         this.registerUserRepository = registerUserRepository;
 
     }
+
+    @CrossOrigin(origins = "http://localhost:4200")
+    @GetMapping("/findById")
+    public Optional<registeruser> findById(
+            @RequestParam(required = true) String id
+            ) {
+
+        Optional<registeruser> k = registerUserRepository.findById(id);
+        return k;
+    }    
 
     @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/addUser")
@@ -99,29 +132,28 @@ public class RegisterUserController {
             @RequestParam(required = false) Boolean updatedAt) {
         Query select = Query.query(Criteria.where("_id").is(id));
         Update update = new Update();
-        if(processing != null){
+        if (processing != null) {
             update.set("processing", processing);
         }
-        if(toBeProcessed != null){
+        if (toBeProcessed != null) {
             update.set("toBeProcessed", toBeProcessed);
         }
-        if(processed != null){
+        if (processed != null) {
             update.set("processed", processed);
         }
-        if(processStartedAt != null){
+        if (processStartedAt != null) {
             update.set("processStartedAt", processStartedAt);
         }
-        if(processFinishedAt != null){
+        if (processFinishedAt != null) {
             update.set("processFinishedAt", processFinishedAt);
         }
-        if(updatedAt != null){
+        if (updatedAt != null) {
             update.set("updatedAt", updatedAt);
         }
         registeruser updateResult = mongoTemplate.findAndModify(select, update, registeruser.class);
-        
+
         return updateResult;
     }
-
 
     @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/runProcess")
@@ -139,58 +171,78 @@ public class RegisterUserController {
         // FindAndModifyOptions().returnNew(true).upsert(true);
         Query select = Query.query(Criteria.where("_id").is(id));
         Update update = new Update();
-        if(processing != null){
+        if (processing != null) {
             update.set("processing", processing);
         }
-        if(toBeProcessed != null){
+        if (toBeProcessed != null) {
             update.set("toBeProcessed", toBeProcessed);
         }
-        if(processed != null){
+        if (processed != null) {
             update.set("processed", processed);
         }
-        if(processStartedAt != null){
+        if (processStartedAt != null) {
             update.set("processStartedAt", processStartedAt);
         }
-        if(processFinishedAt != null){
+        if (processFinishedAt != null) {
             update.set("processFinishedAt", processFinishedAt);
         }
-        if(updatedAt != null){
+        if (updatedAt != null) {
             update.set("updatedAt", updatedAt);
         }
-        // update.set("toBeProcessed", toBeProcessed);
-        // update.set("updatedAt", updatedAt);
         registeruser updateResult = mongoTemplate.findAndModify(select, update, registeruser.class);
 
-        // System.out.println(updateResult);
-        // int percent = 0;
-        
-        try{
-            TimeUnit.SECONDS.sleep(6);
-        }
-        catch(Exception e){
-            e.printStackTrace();
-        }
-        // try {
-        //     for(int i=0;i<5;i++){
-        //         percent = percent + 20;
-        //         TimeUnit.SECONDS.sleep(1);
-        //         return percent;
-        //     }
-        // } catch (Exception e) {
-        //     // TODO Auto-generated catch block
-        //     e.printStackTrace();
-        // }
-        // finally{
-        //     System.out.println("return");
-        //     // return updateResult;
-        //     return percent;
-        // }
+        int percent = -20;
 
+        if (processing == true){
+            for (int i = 0; i < 6; i++) {
+                try {
+                    TimeUnit.SECONDS.sleep(1);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                percent = percent + 20;
+                requestFunction(String.valueOf(percent));
+            }
+    
+        }
+        
         return updateResult;
-        // return MongoTemplate.findAndModify(query, updateDefination, options,
-        // RegisterUserController.class);
+
     }
 
+    public void requestFunction(String message) {
+        HttpURLConnection connection = null;
+        this.template.convertAndSend("/topic/greetings", message);
+        // WebSocketClient client = new StandardWebSocketClient();
+
+        // WebSocketStompClient stompClient = new WebSocketStompClient(client);
+        // stompClient.setMessageConverter(new MappingJackson2MessageConverter());
+
+        // StompSessionHandler sessionHandler = (StompSessionHandler) new MyStompSessionHandler();
+        // stompClient.connect("http://10.0.0.188:8093/ws/topic/greeting?message=" + message, sessionHandler);
+
+        // new Scanner(System.in).nextLine();
+
+        URL yahoo;
+        try {
+        yahoo = new URL("http://10.0.0.108:8093/ws/topic/greeting?message="
+        +message);
+        java.net.URLConnection yc = yahoo.openConnection();
+        BufferedReader in = new BufferedReader(
+        new InputStreamReader(
+        yc.getInputStream()));
+        String inputLine;
+
+        while ((inputLine = in.readLine()) != null)
+        System.out.println(inputLine);
+        in.close();
+        } catch (Exception e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+        }
+
+    }
 
     @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/finishProcess")
@@ -200,22 +252,31 @@ public class RegisterUserController {
             @RequestParam(required = false) String processed,
             @RequestParam(required = false) String processStartedAt,
             @RequestParam(required = false) String processFinishedAt) {
-        
+
         Query select = Query.query(Criteria.where("_id").is(id));
         Update update = new Update();
-        if(processing != null){
+        if (processing != null) {
             update.set("processing", processing);
         }
-        if(processed != null){
+        if (processed != null) {
             update.set("processed", processed);
         }
-        if(processStartedAt != null){
+        if (processStartedAt != null) {
             update.set("processStartedAt", processStartedAt);
         }
-        if(processFinishedAt != null){
+        if (processFinishedAt != null) {
             update.set("processFinishedAt", processFinishedAt);
         }
         registeruser updateResult = mongoTemplate.findAndModify(select, update, registeruser.class);
         return updateResult;
+    }
+
+    @CrossOrigin(origins = "http://localhost:4200")
+    @MessageMapping("/hello")
+    @SendTo("/topic/greetings")
+    public String greeting(String message) throws Exception {
+        // Thread.sleep(1000); // simulated delay
+        System.out.println(message);
+        return HtmlUtils.htmlEscape(message);
     }
 }
