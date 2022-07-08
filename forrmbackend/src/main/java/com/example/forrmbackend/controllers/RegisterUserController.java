@@ -12,7 +12,6 @@ import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

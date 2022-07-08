@@ -1,0 +1,95 @@
+<noscript><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websocket relies on Javascript being
+    enabled. Please enable
+    Javascript and reload this page!</h2></noscript>
+<p>table works!</p>
+<button (click)="connect()" class="btn btn-default" type="submit">Connect</button>
+<button (click)="disconnect()" class="btn btn-default" type="submit">Disconnect
+</button>
+
+<div class="col-md-6">
+    <form class="form-inline">
+        <div class="form-group">
+            <label for="name">What is your name?</label>
+            <input type="text" [(ngModel)]="name" class="form-control" name="name"> <br>
+        </div>
+        <button (click)="sendMessage()" class="btn btn-default" type="submit">Send</button>
+    </form>
+</div>
+<p> {{ greeting }}</p>
+<button mat-raised-button color="primary" (click)="addEvent()">Add An Event</button>
+<div class="mat-elevation-z8">
+    <mat-progress-bar mode="indeterminate" *ngIf="isLoading"></mat-progress-bar>
+
+    <table mat-table [dataSource]="dataSource" class="mat-elevation-z8" matSort>
+        <ng-container [matColumnDef]="column" *ngFor="let column of displayedColumns">
+
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ column }}</th>
+            <td mat-cell *matCellDef="let emp">
+                <div *ngIf="column!='run'">{{ emp[column] }}</div>
+                <div *ngIf="column=='run'">
+                    <div *ngIf="emp['updatedAt']!='null'"> <button mat-raised-button color="primary"
+                            disabled>run</button></div>
+                    <div *ngIf="emp['updatedAt']=='null'"><button mat-raised-button color="primary"
+                            (click)="runProcess(emp)">run</button> </div>
+                </div>
+            </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let emprow; columns: displayedColumns"></tr>
+    </table>
+    <!-- <mat-paginator #paginator [pageSize]="page_size" showFirstLastButtons></mat-paginator> -->
+    <mat-paginator #paginator [pageIndex]="currentPage" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
+        (page)="pageChanged($event)" aria-label="Select page">
+    </mat-paginator>
+</div>
+
+
+<!-- <div class="overlay" *ngIf="popup">
+    <div class="popup">
+        <h2>Header</h2>
+        <a class="close" (click)="closePopUp()">&times;</a>
+        <div class="content">
+            <h4>Basic native select</h4>
+            <mat-form-field appearance="fill">
+                <mat-label>Search</mat-label>
+                <mat-select matNativeControl [(value)]="selectedProcessType">
+                    <mat-option value="createAccount" selected>Create Account</mat-option>
+                    <mat-option value="assignTask">Assign Task</mat-option>
+                </mat-select>
+            </mat-form-field>
+            <button mat-raised-button color="primary" (click)="runPopupProcess()">run</button>
+
+        </div>
+    </div>
+</div> -->
+
+
+
+<div class="overlay" *ngIf="addformpopup">
+    <div class="popup">
+        <h2>Header</h2>
+        <a class="close" (click)="closeAddPopUp()">&times;</a>
+        <div class="content">
+            <h4>Basic native select</h4>
+            <form #gfgform="ngForm" (ngSubmit)="addUser(gfgform)">
+                {{ gfgform.value | json }}
+                <br>
+                <br>
+                Input File: <input type="text" name='inputFile' ngModel><br>
+                Output File: <input type="text" name='outputFile' ngModel><br>
+                Created By: <input type="text" name='createdBy' ngModel><br>
+                Process Type:
+                <mat-form-field appearance="fill">
+                    <mat-label>Search</mat-label>
+                    <mat-select matNativeControl [(value)]="selectedProcessType">
+                        <mat-option value="createAccount" selected>Create Account</mat-option>
+                        <mat-option value="assignTask">Assign Task</mat-option>
+                    </mat-select>
+                </mat-form-field><br>
+                <button mat-raised-button color="primary" type="submit">Add user</button>
+            </form>
+
+        </div>
+    </div>
+</div>
